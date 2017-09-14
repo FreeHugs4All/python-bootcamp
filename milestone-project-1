@@ -1,0 +1,235 @@
+# Milestone Project 1
+#     2 Player Tic-Tac-Toe
+# Author: Tiffany Lum
+# Date: 09/14/2017
+
+# 2 players should be able to play the game (at the same computer)
+# board should be printed out every time a player makes a move
+# accept input of player position and place a symbol on the board
+
+###################################################################################################
+# Import Statements
+import random
+###################################################################################################
+
+# Global Vars
+## String Prompts and Answers
+welcome = 'Welcome to a Simple Game of Tic Tac Toe (2 players). \nPlayer 1 is O. Player 2 is X.\n'
+start_over = 'Would you like to start over?'
+invalid_input = 'Please enter a valid input.'
+player = 'Player '
+o = '1 is O : '
+x = '2 is X : '
+row_num_str = 'Pick your row: enter a value from 1 - 3: Enter q to quit: '
+col_num_str = 'Pick your column: enter a value from 1 - 3: Enter q to quit: '
+place_taken = 'There\'s already a symbol there. Please choose another space.'
+
+# Other Variables
+player_num = 1 							# player_num: current player number: either 1 or 2
+max_num_cols =  max_num_rows = 3		# number of maximum columns = number of maximum rows = 3
+symbols = ('O', 'X')					# two symbols, since we want immutable: tuple
+play_again = True 						# if players wish to play_again. Initially, set to True for the 1st game
+spacer = ' '*7							# spacer: used to format board
+half_spacer = ' '*3						# half-spacer: used to format board
+count_num_symbols = 0 					# number of spots that have been filled
+empty_spots = True 						# boolean is true while Empty spots are still available (ie. count_num_symbols != 9)
+
+
+####################################################################################
+# Functions:
+###################################################################################
+###################################################################
+# get_valid_input: checks if user's input is valid
+# 	Validity Check: row or column must be [1,3] if not throw exception
+# Parameter:
+#			row_or_column: integer corresponding to the row/col
+#			type: row or column (this is for input prompt)
+# Result:
+###################################################################
+def get_valid_input(row_or_column, type):
+	player_choice = ' '
+	while row_or_column not in range (1,4):
+		try:
+			if(type == 'row'):
+				player_choice = input(row_num_str)
+			else:
+				player_choice = input(col_num_str)
+
+			# player wants to quit
+			if player_choice.lower() == 'q':
+				return -1
+			if 1 > int(player_choice) or int(player_choice) > 3: 
+				raise ValueError()
+		except ValueError:
+			print('Invalid Input. Please enter an integer value 1 - 3')
+		else:
+			return int(player_choice)
+
+###################################################################
+# check_for_winner: checks if a player has won
+# Parameters:
+#		player_row: row that player placed symbol
+#		player_col: col that player placed symbol
+# Notes: winning is defined by having the same symbol in the 
+#        same row, column, or diagonal.
+#        we only need to check the row or column that a symbol
+#          was place on. Diagonals are always checked, but
+#          can also be checked only if the center or corners
+#          were the place for the current symbol placement
+# Result:
+#		 returns True if we have a winner!
+###################################################################
+
+def check_for_winner(player_row, player_col):
+	# Check for a winner (only concerned about rows, columns affected by latest addition)
+	if board_map[player_row - 1][0] == board_map[player_row - 1][1] == board_map[player_row - 1][2] != ' ':
+		return player_num	
+	# Check for winner (column affected by latest addition)
+	elif board_map[0][player_col - 1] == board_map[1][player_col - 1] == board_map[2][player_col - 1] != ' ':
+		return player_num	
+	# Check diagonals for winner
+	elif board_map[0][0] == board_map[1][1] == board_map[2][2] != ' ' or ( board_map[2][0] == board_map[1][1] == board_map[0][2] != ' '):
+		return player_num
+	# all places taken: no winner: reset
+	elif count_num_symbols == 9:
+		return 3
+	else:
+		return 0
+
+###################################################################	
+# Function: print_board : prints out the current board
+# Parameters: none
+# Result: prints board by each row. Complains if you print out the 
+#           actual iterable print_row
+###################################################################
+
+def print_board():
+	print('\n')
+	row_counter = 1
+	print(' ' + spacer + '1' + spacer + '2' + spacer + '3\n')
+	for print_row in range(0,3):	
+		print(str(row_counter) + spacer + board_map[print_row][0] + half_spacer + '|' \
+		+ half_spacer + board_map[print_row][1] + half_spacer + '|'+ half_spacer +  board_map[print_row][2] )
+		if(print_row == 0 or print_row == 1):
+			print('      ------+-------+-------')
+		row_counter += 1
+
+###################################################################
+# lambda function to swap players: either 1 or 2 
+# Parameters: player_num is the current player
+# Result: swap player_num:
+#            if (1): 2
+#            elif(2): 1
+# use modulo for kicks: 1%2 returns 1 and we add 1
+#                       2%2 returns 0 and we add 1
+###################################################################
+
+swap_player_num = lambda player_num: (player_num % 2) + 1
+# It's the equivalent to this:
+	# if(player_num == 1):
+	#	player_num = 2
+	# else:
+	#	player_num = 1
+
+###################################################################
+# Function: players_play_again
+# Parameters: none; 
+# inner variables:
+# 		answer: user's input answer
+#               must be either 'Y' or 'N' (lower or uppercase)
+# Result: returns true if players want to continue, else false
+###################################################################
+def players_play_again():
+	while True:
+		try:
+			answer = input('Would you like to play again? Y or N: ')
+			if answer.lower() == 'y':
+				return True
+			if answer.lower() == 'n' or answer.lower() == 'q': 
+				return False
+			else:
+				raise ValueError()
+		except ValueError:
+			print('Invalid Input. Please enter Y or N or Q')
+			continue
+
+###################################################################
+# Function: play
+# Tic Toc Toe play: 2 players play until:
+#       1. One of them wins by having a matching col, row, or diagonal
+#       2. There are no empty spots left and no winner
+#       3. A player quits
+
+def play_tic_toc_toe():
+	global player_num
+	global count_num_symbols
+
+	# Randomly select the first player
+	player_num = random.randint(1,2)
+
+	while empty_spots:
+		if(player_num == 1):
+			print('\n' + player + '{}\'s turn'.format('O'))
+		else:
+			print('\n' + player + '{}\'s turn'.format('X'))	
+
+		# initially, we don't know if selected spot is valid or not
+		invalid_spot = True 
+
+		 # while wanted space is already taken or input is out of range, keep asking them for a valid spot
+		while invalid_spot:
+			# Get a valid spot (x,y) coordinate (ie. in range); if -1, then a player wants to quit
+			player_row = get_valid_input(0, 'row')
+			if player_row == -1:
+				return False
+			player_col = get_valid_input(0, 'col')
+			if player_col == -1:
+				return False
+
+			# Check if selected spot was already taken
+			if(board_map[player_row - 1][player_col - 1] != ' '):
+				print('\n\nPlace already taken. Choose another.\n ')
+				print_board()
+
+			# Else, put symbol in spot
+			else:
+				board_map[player_row - 1][player_col - 1] = symbols[player_num - 1]
+				count_num_symbols += 1
+				invalid_spot = False
+		
+		print_board()
+
+		# Check for winner :
+		#   0 = no winner, still have empty spots
+		#   1 or 2 = winner is player 1 or 2
+		#   3 = no winner and no empty spots
+
+		winner = check_for_winner(player_row,player_col)
+		if winner == 0:
+			# no winner, still have empty spots; swap players
+			player_num = swap_player_num(player_num)
+			continue
+		elif winner == 3:
+			# no winner, but we have no more empty spots
+			print('It\'s a tie')
+			return players_play_again()
+		else:
+			print ('\n Player {} is the winner!\n'.format(player_num))
+			return players_play_again()
+
+
+#########################################################################################################
+# Beginning: 
+	# Welcome
+print(welcome)
+
+#Play
+###################################################################
+while play_again:
+	if play_again:
+		# reset values to default
+		player_num = 1
+		count_num_symbols = 0
+		board_map = [[' ',' ',' '],[' ',' ',' '],[' ',' ',' ']]
+		print_board()
+	play_again = play_tic_toc_toe()
