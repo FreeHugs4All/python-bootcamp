@@ -6,6 +6,7 @@
 
 import math
 
+limit = 200
 ############################################################################
 # Function: validate_input
 # Parameters: none
@@ -19,6 +20,8 @@ def validate_input():
 			n = int(input("Up to what digit would you like to print out pi? "))
 			if( n <= 0):
 				print("Please enter a positive number. ")
+			elif (n > limit):
+				print("Please enter an integer less than %s." % (limit))
 			else:
 				return n
 		except(ValueError): # catch error if n is not an integer
