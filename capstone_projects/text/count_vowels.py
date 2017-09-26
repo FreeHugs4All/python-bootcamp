@@ -4,7 +4,7 @@
 
 
 list_vowels = ['a','e','i','o','u']
-stringInput = input("Enter a string and I'll compute the number of vowels in it. ")
+stringInput = input("Enter a string and I'll compute the number of vowels in it. ").lower()
 
 def print_vowel_counts(vowel, count):
 	print ("There are %s occurences of '%s' in the string \n" % (count, vowel))
